@@ -5,9 +5,25 @@
     <title>FiveM Monitoring Dashboard</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        #metrics { margin-top: 20px; }
-        .metric { margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        #metrics {
+            margin-top: 20px;
+        }
+        .metric {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #fff;
+            border-left: 5px solid #4CAF50;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -18,14 +34,16 @@
     <script>
         const socket = io();
 
+        // Listen for incoming metric updates.
         socket.on('metric', function(data) {
             console.log('Received metric:', data);
             const metricsDiv = document.getElementById('metrics');
             metricsDiv.innerHTML = `
                 <div class="metric">
                     <p><strong>Timestamp:</strong> ${new Date(data.timestamp * 1000).toLocaleTimeString()}</p>
-                    <p><strong>CPU Usage:</strong> ${data.cpu}%</p>
-                    <p><strong>Memory Usage:</strong> ${data.memory}MB</p>
+                    <p><strong>Tick Time:</strong> ${data.tickTime} ms</p>
+                    <p><strong>Memory Usage:</strong> ${data.memory} KB</p>
+                    <p><strong>Player Count:</strong> ${data.playerCount}</p>
                 </div>
             `;
         });

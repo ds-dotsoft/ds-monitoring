@@ -1,5 +1,3 @@
-// server/index.js
-
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -8,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Parse JSON bodies for POST requests
+// Middleware to parse JSON bodies
 app.use(express.json());
 
 // Endpoint to receive metrics from the FiveM agent
@@ -16,12 +14,12 @@ app.post('/metrics', (req, res) => {
     const metric = req.body;
     console.log("Received metric:", metric);
 
-    // Broadcast the metric to all connected dashboard clients
+    // Broadcast the metric to connected clients
     io.emit('metric', metric);
     res.sendStatus(200);
 });
 
-// Serve the client dashboard (static HTML file)
+// Serve the static dashboard from the client folder
 app.use(express.static(__dirname + '/../client'));
 
 const PORT = 3000;

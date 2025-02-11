@@ -1,41 +1,53 @@
 -- fivem-agent/monitor.lua
 
--- A simple JSON encode function for our purposes.
-function toJSON(tbl)
-    local json = "{"
-    local first = true
-    for k, v in pairs(tbl) do
-        if not first then json = json .. "," end
-        first = false
-        if type(v) == "string" then
-            json = json .. string.format('"%s":"%s"', k, v)
-        else
-            json = json .. string.format('"%s":%s', k, tostring(v))
-        end
-    end
-    json = json .. "}"
-    return json
-end
+--- Advanced Monitoring Agent for FiveM.
+-- This script collects key server metrics every 5 seconds:
+-- * Memory usage (in KB) via `collectgarbage("count")`
+-- * Tick time (calculated from `GetGameTimer()` differences)
+-- * Player count (via `GetPlayers()`)
+-- 
+-- The metrics are then encoded as JSON and sent to a Node.js backend.
+-- @module monitor
 
+--- Starts the monitoring loop.
+-- Collects metrics and sends them to the backend every 5 seconds.
 Citizen.CreateThread(function()
+    local lastTick = GetGameTimer()
+
     while true do
-        -- Simulate metrics: you would replace these with real data.
-        local cpuUsage = math.random(50, 100)       -- Simulated CPU usage percentage.
-        local memoryUsage = math.random(200, 500)     -- Simulated memory usage in MB.
+        local currentTick = GetGameTimer()
+        local tickTime = currentTick - lastTick  -- Tick time in milliseconds.
+        lastTick = currentTick
+
+        --- Collect memory usage in kilobytes.
+        local memoryUsage = collectgarbage("count")
+
+        --- Retrieve the current number of players.
+        local players = GetPlayers() or {}
+        local playerCount = #players
+
+        --- Get current Unix timestamp.
+        local timestamp = os.time()
+
+        --- Build the data table to be sent.
         local data = {
-            cpu = cpuUsage,
-            memory = memoryUsage,
-            timestamp = os.time()
+            memory = memoryUsage,   -- Memory usage in KB.
+            tickTime = tickTime,    -- Tick time in ms.
+            playerCount = playerCount,
+            timestamp = timestamp
         }
-        local jsonData = toJSON(data)
-        
-        -- Send the data to the backend
-        PerformHttpRequest('http://localhost:3000/metrics', function(err, text, headers)
-            if err ~= 200 then
-                print("Error sending metrics: " .. tostring(err))
+
+        --- Encode the data table as a JSON string using FiveM's built-in JSON library.
+        local jsonData = json.encode(data)
+
+        --- Send the JSON data to the Node.js backend.
+        PerformHttpRequest("http://localhost:3000/metrics", function(errorCode, resultData, resultHeaders)
+            if errorCode ~= 200 then
+                print("[Monitor] Error sending metrics: " .. tostring(errorCode))
             end
-        end, 'POST', jsonData, { ['Content-Type'] = 'application/json' })
-        
-        Citizen.Wait(5000)  -- Wait 5 seconds before sending the next metric.
+        end, 'POST', jsonData, { ["Content-Type"] = "application/json" })
+
+        --- Wait 5 seconds (5000 milliseconds) before sending the next update.
+        Citizen.Wait(5000)
     end
 end)
