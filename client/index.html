@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FiveM Monitoring Dashboard</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #metrics { margin-top: 20px; }
+        .metric { margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>FiveM Monitoring Dashboard</h1>
+    <div id="metrics">
+        <p>No data received yet.</p>
+    </div>
+    <script>
+        const socket = io();
+
+        socket.on('metric', function(data) {
+            console.log('Received metric:', data);
+            const metricsDiv = document.getElementById('metrics');
+            metricsDiv.innerHTML = `
+                <div class="metric">
+                    <p><strong>Timestamp:</strong> ${new Date(data.timestamp * 1000).toLocaleTimeString()}</p>
+                    <p><strong>CPU Usage:</strong> ${data.cpu}%</p>
+                    <p><strong>Memory Usage:</strong> ${data.memory}MB</p>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>
